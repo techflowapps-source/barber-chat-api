@@ -1,0 +1,47 @@
+# Blueprint Render — https://render.com/docs/blueprint-spec
+# Dashboard > New > Blueprint > conecte o repositório Git
+
+services:
+  - type: web
+    name: barbershop-whatsapp-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    disk:
+      name: wa-sessions
+      mountPath: /app/sessions
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGINS
+        value: https://barber-chat-api-main.vercel.app,http://localhost:5173
+      - key: WA_SESSION_NAME
+        value: barbershop-main
+      - key: WA_SESSION_DIR
+        value: /app/sessions
+      - key: APPOINTMENT_REMINDER_MINUTES
+        value: "15"
+      - key: PROMOTION_SEND_INTERVAL_MS
+        value: "3000"
+      - key: ADMIN_EMAIL
+        value: barbershoppaiva@gmail.com
+      - key: ADMIN_PASSWORD
+        sync: false

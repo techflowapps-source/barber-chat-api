@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  BARBEIRO
+}
+
+enum SessionStatus {
+  DISCONNECTED
+  CONNECTING
+  QR
+  CONNECTED
+  FAILED
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum MediaType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  LOCATION
+  CONTACT
+  STICKER
+  REACTION
+}
+
+model User {
+  id         String   @id @default(uuid())
+  nome       String
+  email      String   @unique
+  senhaHash  String
+  role       Role     @default(BARBEIRO)
+  createdAt  DateTime @default(now())
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WhatsappSession {
+  id            String        @id @default(uuid())
+  sessionName   String        @unique
+  phone         String?
+  profileName   String?
+  profilePhoto  String?
+  sessionStatus SessionStatus @default(DISCONNECTED)
+  qrCode        String?
+  connectedAt   DateTime?
+  lastHeartbeat DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Contact {
+  id           String        @id @default(uuid())
+  phone        String        @unique
+  nome         String?
+  foto         String?
+  createdAt    DateTime      @default(now())
+  messages     Message[]
+  appointments Appointment[]
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  contactId   String
+  contact     Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  barberId    String?
+  service     String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  notes       String?
+  reminded15m Boolean           @default(false)
+  reminded24h Boolean           @default(false)
+  reminded1h  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([startsAt, status])
+  @@index([contactId, startsAt])
+}
+
+model Message {
+  id         String        @id @default(uuid())
+  remoteJid  String
+  fromMe     Boolean
+  message    String
+  mediaType  MediaType     @default(TEXT)
+  mediaUrl   String?
+  status     MessageStatus @default(PENDING)
+  timestamp  DateTime      @default(now())
+  contact    Contact?      @relation(fields: [contactId], references: [id])
+  contactId  String?
+
+  @@index([remoteJid, timestamp])
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  action    String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([action, createdAt])
+}
+
+model WebhookConfig {
+  id        String   @id @default(uuid())
+  event     String
+  url       String
+  secret    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([event, url])
+}
+
+enum PromotionStatus {
+  QUEUED
+  SENDING
+  COMPLETED
+  FAILED
+}
+
+model Promotion {
+  id           String          @id @default(uuid())
+  title        String
+  message      String
+  status       PromotionStatus @default(QUEUED)
+  totalTargets Int             @default(0)
+  sentCount    Int             @default(0)
+  failedCount  Int             @default(0)
+  createdAt    DateTime        @default(now())
+  completedAt  DateTime?
+
+  @@index([status, createdAt])
+}

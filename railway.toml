@@ -1,0 +1,10 @@
+# Deploy no Railway: npx @railway/cli login && npx @railway/cli up --service barbershop-api
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+watchPatterns = ["backend/**"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"

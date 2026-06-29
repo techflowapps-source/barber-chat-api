@@ -1,0 +1,30 @@
+# Deploy da API NestJS (recomendado: Railway, Render ou VPS)
+# A Vercel NÃO suporta sessão WhatsApp (Baileys) em serverless.
+
+services:
+  - type: web
+    name: barbershop-whatsapp-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: barbershoppaiva@gmail.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /health
