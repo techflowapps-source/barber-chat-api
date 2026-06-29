@@ -26,7 +26,10 @@ function redisConnection(): RedisOptions {
       port: Number(parsed.port || 6379),
       username: parsed.username || undefined,
       password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
-      tls: url.startsWith("rediss://") ? {} : undefined,
+      tls:
+        url.startsWith("rediss://") || parsed.hostname.endsWith(".upstash.io")
+          ? {}
+          : undefined,
       maxRetriesPerRequest: null,
     };
   }

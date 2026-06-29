@@ -1,7 +1,7 @@
 # ---------- build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-RUN apk add --no-cache python3 make g++ openssl
+RUN apk add --no-cache python3 make g++ openssl git
 COPY package*.json ./
 COPY prisma ./prisma
 RUN npm ci
