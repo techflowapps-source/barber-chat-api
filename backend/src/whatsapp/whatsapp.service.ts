@@ -53,10 +53,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     this.queue.registerWorker<ReconnectJob>('session.reconnect', (data) =>
       this.processReconnect(data),
     );
-    await this.connect().catch((e) => {
-      this.logger.error('Falha no boot da sessão', e);
-      void this.logs.record('session.boot_failed', { error: String(e) });
-    });
+    // Conexão WhatsApp é iniciada pelo painel (POST /session/connect), não no boot.
   }
 
   async onModuleDestroy() {
@@ -76,13 +73,29 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getQrCode() {
-    if (!this.qr) return { qr: null };
+    if (!this.qr) return { qr: null, dataUrl: null };
     const dataUrl = await QRCode.toDataURL(this.qr);
     return { qr: this.qr, dataUrl };
   }
 
   async connect() {
-    if (this.sock) return;
+    const current = await this.getStatus();
+    const active = current?.sessionStatus;
+    if (
+      this.sock &&
+      (active === SessionStatus.CONNECTED ||
+        active === SessionStatus.CONNECTING ||
+        active === SessionStatus.QR)
+    ) {
+      return;
+    }
+
+    if (this.sock) {
+      this.sock.end(undefined);
+      this.sock = undefined;
+    }
+    this.qr = undefined;
+
     const { state, saveCreds } = await useMultiFileAuthState(
       join(this.sessionDir, this.sessionName),
     );
